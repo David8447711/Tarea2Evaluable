@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  mariadb:
+    image: mariadb:11
+    container_name: mariadb_fintech
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./mariadb:/docker-entrypoint-initdb.d
+    secrets:
+      - db_root_password
+    networks:
+      fintech_net:
+        ipv4_address: 172.18.0.2
+
+  postgres:
+    image: postgres:16
+    container_name: postgres_fintech
+    restart: always
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/pg_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgresql:/docker-entrypoint-initdb.d
+      #- ./config/pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf
+    secrets:
+      - pg_password
+    networks:
+      fintech_net:
+        ipv4_address: 172.18.0.3
+
+volumes:
+  mariadb_data:
+  postgres_data:
+
+secrets:
+  db_root_password:
+    file: ./secrets/db_root_password.txt
+  pg_password:
+    file: ./secrets/pg_password.txt
+
+networks:
+  fintech_net:
+    name: fintech_net
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.0.0/16
